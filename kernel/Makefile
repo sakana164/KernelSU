@@ -45,6 +45,11 @@ ifndef KSU_EXPECTED_HASH
 KSU_EXPECTED_HASH := f14e353fa59aea9ba5171716198121c885df31e8504472c2233970f3f926f0a6
 endif
 
+ifeq ($(shell grep -q "inode_security_struct\s\+\*selinux_inode" $(srctree)/security/selinux/include/objsec.h; echo $$?),0)
+$(info -- KernelSU: kernel has selinux_inode.)
+ccflags-y += -DKSU_OPTIONAL_SELINUX_INODE
+endif
+
 ifdef KSU_MANAGER_PACKAGE
 ccflags-y += -DKSU_MANAGER_PACKAGE=\"$(KSU_MANAGER_PACKAGE)\"
 $(info -- KernelSU Manager package name: $(KSU_MANAGER_PACKAGE))
