@@ -21,9 +21,27 @@ struct watch_dir {
 
 static struct fsnotify_group *g;
 
+// https://elixir.bootlin.com/linux/v5.8.18/source/include/linux/fsnotify_backend.h
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
 static int ksu_handle_inode_event(struct fsnotify_mark *mark, u32 mask,
 				  struct inode *inode, struct inode *dir,
 				  const struct qstr *file_name, u32 cookie)
+// https://elixir.bootlin.com/linux/v5.2.21/source/include/linux/fsnotify_backend.h
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0)
+static int ksu_handle_event (struct fsnotify_group *group,
+			    struct inode *inode,
+			    u32 mask, const void *data, int data_type,
+			    const struct qstr *file_name, u32 cookie,
+			    struct fsnotify_iter_info *iter_info)
+#else
+static int ksu_handle_event (struct fsnotify_group *group,
+			    struct inode *inode,
+			    u32 mask, const void *data, int data_type,
+			    const unsigned char *file_name, u32 cookie,
+			    struct fsnotify_iter_info *iter_info)
+#endif
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0)
 {
 	if (!file_name)
 		return 0;
@@ -36,10 +54,30 @@ static int ksu_handle_inode_event(struct fsnotify_mark *mark, u32 mask,
 	}
 	return 0;
 }
+#else
+{
+	if (!file_name)
+		return 0;
+	if (mask & FS_ISDIR)
+		return 0;
+	if (strcmp(file_name, "packages.list") == 0) {
+		pr_info("packages.list detected: %d\n", mask);
+		track_throne();
+	}
+	return 0;
+}
+#endif
 
+// https://elixir.bootlin.com/linux/v5.8.18/source/include/linux/fsnotify_backend.h
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
 static const struct fsnotify_ops ksu_ops = {
 	.handle_inode_event = ksu_handle_inode_event,
 };
+#else
+static const struct fsnotify_ops ksu_ops = {
+	.handle_event = ksu_handle_event,
+};
+#endif
 
 static int add_mark_on_inode(struct inode *inode, u32 mask,
 			     struct fsnotify_mark **out)
