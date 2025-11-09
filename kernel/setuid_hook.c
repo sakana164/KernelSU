@@ -52,6 +52,15 @@ static void ksu_install_manager_fd_tw_func(struct callback_head *cb)
     kfree(cb);
 }
 
+static inline void ksu_force_sig(int sig)
+{
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 3, 0) 
+    force_sig(sig);
+#else
+    force_sig(sig, current);
+#endif
+}
+
 int ksu_handle_setresuid(uid_t ruid, uid_t euid, uid_t suid)
 {
     // we rely on the fact that zygote always call setresuid(3) with same uids
@@ -68,7 +77,7 @@ int ksu_handle_setresuid(uid_t ruid, uid_t euid, uid_t suid)
             if (!is_ksu_domain()) {
                 pr_warn("find suspicious EoP: %d %s, from %d to %d\n",
                         current->pid, current->comm, old_uid, new_uid);
-                force_sig(SIGKILL);
+                ksu_force_sig(SIGKILL);
                 return 0;
             }
         }
@@ -78,7 +87,7 @@ int ksu_handle_setresuid(uid_t ruid, uid_t euid, uid_t suid)
                 !ksu_is_allow_uid_for_current(old_uid)) {
                 pr_warn("find suspicious EoP: %d %s, from %d to %d\n",
                         current->pid, current->comm, old_uid, new_uid);
-                force_sig(SIGKILL);
+                ksu_force_sig(SIGKILL);
                 return 0;
             }
         }
