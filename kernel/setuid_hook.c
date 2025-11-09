@@ -81,6 +81,14 @@ int ksu_handle_setresuid(uid_t ruid, uid_t euid, uid_t suid)
 
     pr_info("handle_setresuid from %d to %d\n", old_uid, new_uid);
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 3, 0) 
+// void force_sig(int sig)
+#define KSU_FORCE_KILL force_sig(SIGKILL) 
+#else
+// force_sig(int sig, struct task_struct *p)
+#define KSU_FORCE_KILL force_sig(SIGKILL, current)
+#endif
+
     // if old process is root, ignore it.
     if (old_uid != 0 && ksu_enhanced_security_enabled) {
         // disallow any non-ksu domain escalation from non-root to root!
@@ -89,7 +97,7 @@ int ksu_handle_setresuid(uid_t ruid, uid_t euid, uid_t suid)
             if (!is_ksu_domain()) {
                 pr_warn("find suspicious EoP: %d %s, from %d to %d\n", 
                     current->pid, current->comm, old_uid, new_uid);
-                force_sig(SIGKILL);
+                KSU_FORCE_KILL;
                 return 0;
             }
         }
@@ -98,7 +106,7 @@ int ksu_handle_setresuid(uid_t ruid, uid_t euid, uid_t suid)
             if (euid < current_euid().val && !ksu_is_allow_uid_for_current(old_uid)) {
                 pr_warn("find suspicious EoP: %d %s, from %d to %d\n", 
                     current->pid, current->comm, old_uid, new_uid);
-                force_sig(SIGKILL);
+                KSU_FORCE_KILL;
                 return 0;
             }
         }
