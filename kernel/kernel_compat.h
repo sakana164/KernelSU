@@ -5,6 +5,7 @@
 #include <linux/version.h>
 #include "ss/policydb.h"
 #include "linux/key.h"
+#include <linux/syscalls.h>
 
 /*
  * Adapt to Huawei HISI kernel without affecting other kernels ,
@@ -44,6 +45,22 @@ extern ssize_t ksu_kernel_write_compat(struct file *p, const void *buf,
 #ifndef TWA_RESUME
 #define TWA_RESUME true
 #endif
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 7, 0)
+__weak int close_fd(unsigned fd)
+{
+    return sys_close(fd);
+}
+#endif
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 7, 0) && LINUX_VERSION_CODE < KERNEL_VERSION(5, 11, 0)
+__weak int close_fd(unsigned fd)
+{
+    // this is ksys_close, but that shit is inline
+    // its problematic to cascade a weak symbol for it
+    return __close_fd(current->files, fd);
+}
 #endif
 
 #endif /* __KSU_KERNEL_COMPAT_H */
