@@ -93,6 +93,11 @@ $(info -- You should backport path_umount to fs/namespace.c from 5.9.)
 $(info -- Read: https://kernelsu.org/guide/how-to-integrate-for-non-gki.html#how-to-backport-path-umount)
 endif
 
+ifeq ($(shell grep -q "inode_security_struct\s\+\*selinux_inode" $(srctree)/security/selinux/include/objsec.h; echo $$?),0)
+$(info -- KernelSU: kernel has selinux_inode.)
+ccflags-y += -DKSU_OPTIONAL_SELINUX_INODE
+endif
+
 all:
 	make -C $(KDIR) M=$(MDIR) modules
 compdb:
