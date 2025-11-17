@@ -9,7 +9,14 @@
 #include <linux/file.h>
 #include <linux/fs.h>
 #include <linux/version.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
 #include <linux/input-event-codes.h>
+#else
+#include <uapi/linux/input.h>
+#endif
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)
+#include <linux/aio.h>
+#endif
 #include <linux/kprobes.h>
 #include <linux/printk.h>
 #include <linux/types.h>
@@ -261,7 +268,11 @@ int ksu_handle_execveat_ksud(int *fd, struct filename **filename_ptr,
         init_task = rcu_dereference(current->real_parent);
         // fallback for initial installation, ksud is not there
         if (init_task) {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 8)
             task_work_add(init_task, &on_post_fs_data_cb, TWA_RESUME);
+#else
+            task_work_add(init_task, &on_post_fs_data_cb, true);
+#endif
         }
         rcu_read_unlock();
 
@@ -488,6 +499,27 @@ bool ksu_is_safe_mode()
 }
 
 #ifdef CONFIG_KPROBES
+
+// https://elixir.bootlin.com/linux/v5.10.158/source/fs/exec.c#L1864
+static int execve_handler_pre(struct kprobe *p, struct pt_regs *regs)
+{
+    int *fd = (int *)&PT_REGS_PARM1(regs);
+    struct filename **filename_ptr =
+        (struct filename **)&PT_REGS_PARM2(regs);
+    struct user_arg_ptr argv;
+#ifdef CONFIG_COMPAT
+    argv.is_compat = PT_REGS_PARM3(regs);
+    if (unlikely(argv.is_compat)) {
+        argv.ptr.compat = PT_REGS_CCALL_PARM4(regs);
+    } else {
+        argv.ptr.native = PT_REGS_CCALL_PARM4(regs);
+    }
+#else
+    argv.ptr.native = PT_REGS_PARM3(regs);
+#endif
+
+    return ksu_handle_execveat_ksud(fd, filename_ptr, &argv, NULL, NULL);
+}
 
 static int sys_execve_handler_pre(struct kprobe *p, struct pt_regs *regs)
 {
