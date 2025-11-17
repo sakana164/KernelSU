@@ -526,6 +526,36 @@ static struct kprobe reboot_kp = {
     .pre_handler = reboot_handler_pre,
 };
 
+int ksu_handle_sys_reboot(int magic1, int magic2, unsigned int cmd,
+			  void __user **arg)
+{
+	if (magic1 != KSU_INSTALL_MAGIC1)
+		return 0;
+
+#ifdef CONFIG_KSU_DEBUG
+	pr_info("sys_reboot: intercepted call! magic: 0x%x id: %d\n", magic1,
+		magic2);
+#endif
+
+	// Check if this is a request to install KSU fd
+	if (magic2 == KSU_INSTALL_MAGIC2) {
+		int fd = ksu_install_fd();
+		// downstream: dereference all arg usage!
+		if (copy_to_user((void __user *)*arg, &fd, sizeof(fd))) {
+			pr_err("install ksu fd reply err\n");
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 11, 0)
+			close_fd(fd);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 17, 0)
+			ksys_close(fd);
+#else
+			sys_close(fd);
+#endif
+		}
+		return 0;
+	}
+
+	return 0;
+}
 
 void ksu_supercalls_init(void)
 {
