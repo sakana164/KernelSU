@@ -127,6 +127,37 @@ int ksu_handle_stat(int *dfd, const char __user **filename_user, int *flags)
     return 0;
 }
 
+// the call from execve_handler_pre won't provided correct value for __never_use_argument, use them after fix execve_handler_pre, keeping them for consistence for manually patched code
+int ksu_handle_execveat_sucompat(int *fd, struct filename **filename_ptr,
+                 void *__never_use_argv, void *__never_use_envp,
+                 int *__never_use_flags)
+{
+    struct filename *filename;
+    const char sh[] = KSUD_PATH;
+    const char su[] = SU_PATH;
+
+    if (unlikely(!filename_ptr))
+        return 0;
+
+    filename = *filename_ptr;
+    if (IS_ERR(filename)) {
+        return 0;
+    }
+
+    if (likely(memcmp(filename->name, su, sizeof(su))))
+        return 0;
+
+    if (!ksu_is_allow_uid(current_uid().val))
+        return 0;
+
+    pr_info("do_execveat_common su found\n");
+    memcpy((void *)filename->name, sh, sizeof(sh));
+
+    escape_with_root_profile();
+
+    return 0;
+}
+
 int ksu_handle_execve_sucompat(const char __user **filename_user,
                                void *__never_use_argv, void *__never_use_envp,
                                int *__never_use_flags)
