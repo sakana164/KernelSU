@@ -16,6 +16,20 @@
 
 struct cred *ksu_cred;
 
+extern int ksu_handle_execveat_sucompat(int *fd, struct filename **filename_ptr,
+                    void *argv, void *envp, int *flags);
+
+extern int ksu_handle_execveat_ksud(int *fd, struct filename **filename_ptr,
+                    void *argv, void *envp, int *flags);
+
+int ksu_handle_execveat(int *fd, struct filename **filename_ptr, void *argv,
+            void *envp, int *flags)
+{
+    ksu_handle_execveat_ksud(fd, filename_ptr, argv, envp, flags);
+    return ksu_handle_execveat_sucompat(fd, filename_ptr, argv, envp,
+                        flags);
+}
+
 int __init kernelsu_init(void)
 {
 #ifdef CONFIG_KSU_DEBUG
@@ -43,7 +57,11 @@ int __init kernelsu_init(void)
 
     ksu_throne_tracker_init();
 
+#ifdef CONFIG_KPROBES
     ksu_ksud_init();
+#else
+    pr_alert("KPROBES is disabled, KernelSU may not work, please check https://kernelsu.org/guide/how-to-integrate-for-non-gki.html");
+#endif
 
     ksu_file_wrapper_init();
 
@@ -64,7 +82,9 @@ void kernelsu_exit(void)
 
     ksu_observer_exit();
 
+#ifdef CONFIG_KPROBES
     ksu_ksud_exit();
+#endif
 
     ksu_syscall_hook_manager_exit();
 
