@@ -71,6 +71,8 @@ static inline bool is_allow_su()
     return ksu_is_allow_uid_for_current(current_uid().val);
 }
 
+extern void disable_seccomp(void);
+
 int ksu_handle_setresuid(uid_t ruid, uid_t euid, uid_t suid)
 {
     // we rely on the fact that zygote always call setresuid(3) with same uids
@@ -108,6 +110,7 @@ int ksu_handle_setresuid(uid_t ruid, uid_t euid, uid_t suid)
         ksu_set_manager_uid(new_uid);
     }
 
+    #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
     if (ksu_get_manager_uid() == new_uid) {
         pr_info("install fd for manager: %d\n", new_uid);
         ksu_install_fd();
@@ -130,6 +133,19 @@ int ksu_handle_setresuid(uid_t ruid, uid_t euid, uid_t suid)
         ksu_clear_task_tracepoint_flag_if_needed(current);
     }
 
+#else
+    if (ksu_is_allow_uid_for_current(new_uid)) {
+        spin_lock_irq(&current->sighand->siglock);
+        disable_seccomp();
+        spin_unlock_irq(&current->sighand->siglock);
+
+        if (ksu_get_manager_uid() == new_uid) {
+            pr_info("install fd for: %d\n", new_uid);
+            ksu_install_fd(); // install fd for ksu manager
+        }
+        return 0;
+    }
+#endif
     // Handle kernel umount
     ksu_handle_umount(old_uid, new_uid);
 

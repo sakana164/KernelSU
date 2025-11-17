@@ -46,7 +46,11 @@ void setup_groups(struct root_profile *profile, struct cred *cred)
 			put_group_info(group_info);
 			return;
 		}
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0)
 		group_info->gid[i] = kgid;
+#else
+		GROUP_AT(group_info, i) = kgid;
+#endif
 	}
 
 	groups_sort(group_info);
@@ -54,7 +58,7 @@ void setup_groups(struct root_profile *profile, struct cred *cred)
 	put_group_info(group_info);
 }
 
-static void disable_seccomp(void)
+void disable_seccomp(void)
 {
 	assert_spin_locked(&current->sighand->siglock);
 	// disable seccomp
@@ -68,8 +72,9 @@ static void disable_seccomp(void)
 #ifdef CONFIG_SECCOMP
 	current->seccomp.mode = 0;
 	current->seccomp.filter = NULL;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
 	atomic_set(&current->seccomp.filter_count, 0);
-#else
+#endif
 #endif
 }
 
