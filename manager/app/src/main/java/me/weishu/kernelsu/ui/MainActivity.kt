@@ -1,5 +1,6 @@
 package me.weishu.kernelsu.ui
 
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -19,6 +20,7 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -29,8 +31,10 @@ import com.ramcosta.composedestinations.DestinationsNavHost
 import com.ramcosta.composedestinations.animations.NavHostAnimatedDestinationStyle
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
+import com.ramcosta.composedestinations.generated.destinations.FlashScreenDestination
 import com.ramcosta.composedestinations.generated.NavGraphs
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.ramcosta.composedestinations.utils.rememberDestinationsNavigator
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
@@ -38,6 +42,7 @@ import dev.chrisbanes.haze.hazeSource
 import kotlinx.coroutines.launch
 import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.ui.component.BottomBar
+import me.weishu.kernelsu.ui.screen.FlashIt
 import me.weishu.kernelsu.ui.screen.HomePager
 import me.weishu.kernelsu.ui.screen.ModulePager
 import me.weishu.kernelsu.ui.screen.SettingPager
@@ -65,6 +70,14 @@ class MainActivity : ComponentActivity() {
         setContent {
             KernelSUTheme {
                 val navController = rememberNavController()
+                val navigator = navController.rememberDestinationsNavigator()
+
+                // Navigate to FlashScreen if ZIP file is provided and isManager
+                LaunchedEffect(Unit) {
+                    intent?.data
+                        ?.takeIf { isManager && it.scheme == "content" && intent.type == "application/zip" }
+                        ?.let { navigator.navigate(FlashScreenDestination(FlashIt.FlashModules(listOf(it)))) }
+                }
 
                 Scaffold {
                     DestinationsNavHost(
