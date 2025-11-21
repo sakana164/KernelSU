@@ -1,6 +1,5 @@
 package me.weishu.kernelsu.ui
 
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -22,6 +21,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -39,6 +41,7 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeSource
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.ui.component.BottomBar
@@ -53,6 +56,8 @@ import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 class MainActivity : ComponentActivity() {
+
+    private val intentState = MutableStateFlow(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -73,10 +78,14 @@ class MainActivity : ComponentActivity() {
                 val navigator = navController.rememberDestinationsNavigator()
 
                 // Navigate to FlashScreen if ZIP file is provided and isManager
-                LaunchedEffect(Unit) {
+                // Collect intentState as Compose State for thread-safe observation
+                val intentStateValue by intentState.collectAsState()
+                LaunchedEffect(intentStateValue) {
                     intent?.data
                         ?.takeIf { isManager && it.scheme == "content" && intent.type == "application/zip" }
-                        ?.let { navigator.navigate(FlashScreenDestination(FlashIt.FlashModules(listOf(it)))) }
+                        ?.let {
+                            navigator.navigate(FlashScreenDestination(FlashIt.FlashModules(listOf(it))))
+                        }
                 }
 
                 Scaffold {
@@ -121,6 +130,13 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        // Increment intentState to trigger LaunchedEffect re-execution
+        intentState.value += 1
     }
 }
 
