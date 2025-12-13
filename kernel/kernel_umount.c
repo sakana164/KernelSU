@@ -17,6 +17,7 @@
 #include "feature.h"
 #include "ksud.h"
 #include "ksu.h"
+#include "kernel_compat.h"
 
 static bool ksu_kernel_umount_enabled = true;
 
@@ -140,11 +141,7 @@ int ksu_handle_umount(uid_t old_uid, uid_t new_uid)
 
     tw->cb.func = umount_tw_func;
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 8)
     int err = task_work_add(current, &tw->cb, TWA_RESUME);
-#else
-    int err = task_work_add(current, &tw->cb, true);
-#endif
     if (err) {
         kfree(tw);
         pr_warn("unmount add task_work failed\n");

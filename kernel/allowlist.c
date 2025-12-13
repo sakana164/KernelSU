@@ -26,6 +26,7 @@
 #include "manager.h"
 #include "syscall_hook_manager.h"
 #include "su_mount_ns.h"
+#include "kernel_compat.h"
 
 #define FILE_MAGIC 0x7f4b5355 // ' KSU', u32
 #define FILE_FORMAT_VERSION 3 // u32
@@ -430,11 +431,7 @@ void persistent_allow_list()
         goto put_task;
     }
     cb->func = do_persistent_allow_list;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 8)
     task_work_add(tsk, cb, TWA_RESUME);
-#else
-    task_work_add(tsk, cb, true);
-#endif
 
 put_task:
     put_task_struct(tsk);

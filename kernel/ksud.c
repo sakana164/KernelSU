@@ -33,6 +33,7 @@
 #include "util.h"
 #include "selinux/selinux.h"
 #include "throne_tracker.h"
+#include "kernel_compat.h"
 
 bool ksu_module_mounted __read_mostly = false;
 bool ksu_boot_completed __read_mostly = false;
@@ -268,11 +269,7 @@ int ksu_handle_execveat_ksud(int *fd, struct filename **filename_ptr,
         init_task = rcu_dereference(current->real_parent);
         // fallback for initial installation, ksud is not there
         if (init_task) {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 7, 8)
             task_work_add(init_task, &on_post_fs_data_cb, TWA_RESUME);
-#else
-            task_work_add(init_task, &on_post_fs_data_cb, true);
-#endif
         }
         rcu_read_unlock();
 

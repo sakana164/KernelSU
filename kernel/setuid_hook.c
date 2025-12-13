@@ -22,6 +22,7 @@
 #include "supercalls.h"
 #include "syscall_hook_manager.h"
 #include "kernel_umount.h"
+#include "kernel_compat.h"
 
 static bool ksu_enhanced_security_enabled = false;
 
