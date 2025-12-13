@@ -26,6 +26,7 @@
 #include "manager.h"
 #include "syscall_hook_manager.h"
 #include "su_mount_ns.h"
+#include "kernel_compat.h"
 
 #define FILE_MAGIC 0x7f4b5355 // ' KSU', u32
 #define FILE_FORMAT_VERSION 3 // u32
