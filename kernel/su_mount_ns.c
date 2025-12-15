@@ -8,12 +8,21 @@
 #include <linux/namei.h>
 #include <linux/proc_ns.h>
 #include <linux/pid.h>
-#include <linux/sched/task.h>
 #include <linux/slab.h>
 #include <linux/syscalls.h>
 #include <linux/task_work.h>
 #include <linux/version.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0)
+#include <linux/sched/task.h>
+#else
+#include <linux/sched.h>
+#endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 0, 0)
 #include <uapi/linux/mount.h>
+#else
+#include <uapi/linux/fs.h>
+#endif
+#include "kernel_compat.h"
 
 #include "arch.h"
 #include "klog.h" // IWYU pragma: keep
