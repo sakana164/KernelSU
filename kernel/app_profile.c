@@ -69,7 +69,7 @@ void setup_groups(struct root_profile *profile, struct cred *cred)
 void seccomp_filter_release(struct task_struct *tsk);
 #endif
 
-void disable_seccomp(void)
+static void do_disable_seccomp(void)
 {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0) ||                          \
      defined(KSU_OPTIONAL_SECCOMP_FILTER_RELEASE))
@@ -124,6 +124,14 @@ void disable_seccomp(void)
     seccomp_filter_release(fake);
     kfree(fake);
 #endif
+}
+
+void disable_seccomp(void)
+{
+    if (!!!current->seccomp.mode) {
+        return;
+    }
+    do_disable_seccomp();
 }
 
 void escape_with_root_profile(void)
