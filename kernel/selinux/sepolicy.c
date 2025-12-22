@@ -594,11 +594,11 @@ static bool add_genfscon(struct policydb *db, const char *fs_name,
 #elif LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)
 #define ksu_kvrealloc(p, new_size, old_size)                                   \
     kvrealloc(p, old_size, new_size, GFP_ATOMIC)
-#else
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5, 1, 0)
 // https://cs.android.com/android/_/android/kernel/common/+/f5f3e54f811679761c33526e695bd296190faade
 // Some 5.10 kernel don't have this backport, so copy one.
-void *ksu_kvrealloc_compat(const void *p, size_t oldsize, size_t newsize,
-                           gfp_t flags)
+static void *ksu_kvrealloc_compat(const void *p, size_t oldsize, size_t newsize,
+                                  gfp_t flags)
 {
     void *newp;
 
@@ -607,7 +607,7 @@ void *ksu_kvrealloc_compat(const void *p, size_t oldsize, size_t newsize,
     newp = kvmalloc(newsize, flags);
     if (!newp)
         return NULL;
-    memcpy(newp, p, oldsize);
+    __builtin_memcpy(newp, p, oldsize); // bypass fortify_source, kasan
     kvfree(p);
     return newp;
 }
