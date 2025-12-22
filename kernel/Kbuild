@@ -74,6 +74,15 @@ $(info -- KernelSU/compat: exported policy_rwlock found!)
 ccflags-y += -DKSU_COMPAT_HAS_EXPORTED_POLICY_RWLOCK
 endif
 
+ifeq ($(shell grep -q "struct type_datum \*\*type_val_to_struct;" $(srctree)/security/selinux/ss/policydb.h; echo $$?),0)
+ccflags-y += -DKSU_TYPE_VAL_TO_STRUCT
+endif
+
+# half-assed-backport from 5.1
+ifeq ($(shell grep -q "struct type_datum \*\*type_val_to_struct_array;" $(srctree)/security/selinux/ss/policydb.h; echo $$?),0)
+ccflags-y += -DKSU_TYPE_VAL_TO_STRUCT_ARRAY
+endif
+
 ifeq ($(shell grep -q "int path_umount" $(srctree)/fs/namespace.c; echo $$?),0)
 ccflags-y += -DKSU_UMOUNT
 else
