@@ -135,7 +135,7 @@ fun SettingPager(
                 val context = LocalContext.current
                 val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
                 var checkUpdate by rememberSaveable {
-                    mutableStateOf(prefs.getBoolean("check_update", true))
+                    mutableStateOf(prefs.getBoolean("check_update", false))
                 }
 
                 Card(
