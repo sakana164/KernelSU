@@ -14,6 +14,20 @@
 #include "ksu.h"
 #include "file_wrapper.h"
 
+extern int ksu_handle_execveat_sucompat(int *fd, struct filename **filename_ptr,
+                    void *argv, void *envp, int *flags);
+
+extern int ksu_handle_execveat_ksud(int *fd, struct filename **filename_ptr,
+                    void *argv, void *envp, int *flags);
+
+int ksu_handle_execveat(int *fd, struct filename **filename_ptr, void *argv,
+            void *envp, int *flags)
+{
+    ksu_handle_execveat_ksud(fd, filename_ptr, argv, envp, flags);
+    return ksu_handle_execveat_sucompat(fd, filename_ptr, argv, envp,
+                        flags);
+}
+
 // workaround for A12-5.10 kernel
 // Some third-party kernel (e.g. linegaeOS) uses wrong toolchain, which supports
 // CC_HAVE_STACKPROTECTOR_SYSREG while gki's toolchain doesn't.
@@ -80,7 +94,11 @@ int __init kernelsu_init(void)
 
     ksu_throne_tracker_init();
 
+#ifdef CONFIG_KPROBES
     ksu_ksud_init();
+#else
+    pr_alert("KPROBES is disabled, KernelSU may not work, please check manual hooks.");
+#endif
 
     ksu_file_wrapper_init();
 
@@ -101,7 +119,9 @@ void kernelsu_exit(void)
 
     ksu_observer_exit();
 
+#ifdef CONFIG_KPROBES
     ksu_ksud_exit();
+#endif
 
     ksu_syscall_hook_manager_exit();
 
