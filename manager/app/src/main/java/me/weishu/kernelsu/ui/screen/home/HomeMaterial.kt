@@ -108,12 +108,6 @@ fun HomePagerMaterial(
                 onClickSuperuser = { mainState.animateToPage(1) },
                 onclickModule = { mainState.animateToPage(2) },
             )
-            if (ksuVersion != null && !Natives.isLkmMode) {
-                WarningCard(
-                    stringResource(id = R.string.home_gki_warning),
-                    MaterialTheme.colorScheme.tertiaryContainer
-                )
-            }
             if (isManager && Natives.requireNewKernel()) {
                 WarningCard(
                     stringResource(id = R.string.require_kernel_version).format(
@@ -133,9 +127,39 @@ fun HomePagerMaterial(
                 UpdateCard()
             }
             InfoCard()
+            Unofficial()
             DonateCard()
             LearnMoreCard()
             Spacer(Modifier.height(bottomInnerPadding))
+        }
+    }
+}
+
+@Composable
+private fun Unofficial() {
+    val uriHandler = LocalUriHandler.current
+    val url = stringResource(R.string.home_unofficial_kernelsu_url)
+
+    TonalCard {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { uriHandler.openUri(url) }
+                .padding(24.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = stringResource(R.string.home_unofficial_kernelsu),
+                    style = MaterialTheme.typography.titleSmall
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.home_unofficial_kernelsu_body),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
         }
     }
 }

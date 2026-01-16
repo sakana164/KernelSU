@@ -144,9 +144,6 @@ fun HomePagerMiuix(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    if (ksuVersion != null && !Natives.isLkmMode) {
-                        WarningCard(stringResource(id = R.string.home_gki_warning))
-                    }
                     if (isManager && Natives.requireNewKernel()) {
                         WarningCard(
                             stringResource(id = R.string.require_kernel_version)
@@ -173,12 +170,39 @@ fun HomePagerMiuix(
                         UpdateCard()
                     }
                     InfoCard()
+                    Unofficial()
                     DonateCard()
                     LearnMoreCard()
                 }
                 Spacer(Modifier.height(bottomInnerPadding))
             }
         }
+    }
+}
+
+@Composable
+private fun Unofficial() {
+    val uriHandler = LocalUriHandler.current
+    val url = stringResource(R.string.home_unofficial_kernelsu_url)
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth(),
+    ) {
+        BasicComponent(
+            title = stringResource(R.string.home_unofficial_kernelsu),
+            summary = stringResource(R.string.home_unofficial_kernelsu_body),
+            endActions = {
+                Icon(
+                    imageVector = MiuixIcons.Link,
+                    tint = colorScheme.onSurface,
+                    contentDescription = null
+                )
+            },
+            onClick = {
+                uriHandler.openUri(url)
+            }
+        )
     }
 }
 
