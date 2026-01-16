@@ -97,9 +97,6 @@ fun HomePagerMaterial(
                     )
                 )
             }
-            if (state.showGkiWarning) {
-                WarningCard(stringResource(id = R.string.home_gki_warning))
-            }
             if (state.showRequireKernelWarning) {
                 WarningCard(
                     stringResource(id = R.string.require_kernel_version).format(
@@ -115,9 +112,34 @@ fun HomePagerMaterial(
                 UpdateCard(state = state, actions = actions)
             }
             InfoCard(systemInfo = state.systemInfo)
+            Unofficial(onOpenUrl = actions.onOpenUrl)
             DonateCard(onOpenUrl = actions.onOpenUrl)
             LearnMoreCard(onOpenUrl = actions.onOpenUrl)
             Spacer(Modifier.height(bottomInnerPadding))
+        }
+    }
+}
+
+@Composable
+private fun Unofficial(onOpenUrl: (String) -> Unit) {
+    val url = stringResource(R.string.home_unofficial_kernelsu_url)
+    TonalCard {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onOpenUrl(url) }
+                .padding(24.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(text = stringResource(R.string.home_unofficial_kernelsu), style = MaterialTheme.typography.titleSmall)
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.home_unofficial_kernelsu_body),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
         }
     }
 }
@@ -524,6 +546,7 @@ private fun HomeScreenPreviewContent(
                 actions = actions
             )
             InfoCard(previewSystemInfo.copy(selinuxStatus = selinuxStatus))
+            Unofficial(onOpenUrl = {})
             DonateCard(onOpenUrl = {})
             LearnMoreCard(onOpenUrl = {})
         }

@@ -134,9 +134,6 @@ fun HomePagerMiuix(
                             )
                         )
                     }
-                    if (state.showGkiWarning) {
-                        WarningCard(stringResource(id = R.string.home_gki_warning))
-                    }
                     if (state.showRequireKernelWarning) {
                         WarningCard(
                             stringResource(id = R.string.require_kernel_version)
@@ -155,12 +152,35 @@ fun HomePagerMiuix(
                         UpdateCard(state = state, actions = actions)
                     }
                     InfoCard(systemInfo = state.systemInfo)
+                    Unofficial(onOpenUrl = actions.onOpenUrl)
                     DonateCard(onOpenUrl = actions.onOpenUrl)
                     LearnMoreCard(onOpenUrl = actions.onOpenUrl)
                 }
                 Spacer(Modifier.height(bottomInnerPadding))
             }
         }
+    }
+}
+
+@Composable
+private fun Unofficial(onOpenUrl: (String) -> Unit) {
+    val url = stringResource(R.string.home_unofficial_kernelsu_url)
+    Card(
+        modifier = Modifier
+            .fillMaxWidth(),
+    ) {
+        BasicComponent(
+            title = stringResource(R.string.home_unofficial_kernelsu),
+            summary = stringResource(R.string.home_unofficial_kernelsu_body),
+            endActions = {
+                Icon(
+                    imageVector = MiuixIcons.Link,
+                    tint = colorScheme.onSurface,
+                    contentDescription = null
+                )
+            },
+            onClick = { onOpenUrl(url) }
+        )
     }
 }
 
@@ -623,6 +643,7 @@ private fun HomeScreenPreviewContent(
                 actions = actions
             )
             InfoCard(previewSystemInfo.copy(selinuxStatus = selinuxStatus))
+            Unofficial(onOpenUrl = {})
             DonateCard(onOpenUrl = {})
             LearnMoreCard(onOpenUrl = {})
         }
