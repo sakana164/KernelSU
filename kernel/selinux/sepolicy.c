@@ -1148,6 +1148,14 @@ bool ksu_genfscon(struct policydb *db, const char *fs_name, const char *path,
     return add_genfscon(db, fs_name, path, ctx);
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
+#include "ss/avtab.h"
+#include "ss/constraint.h"
+#include "ss/ebitmap.h"
+#include "ss/hashtab.h"
+#include "ss/policydb.h"
+#include "ss/services.h"
+
 // https://github.com/torvalds/linux/commit/581646c3fb98494009671f6d347ea125bc0e663a
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 10, 0)
 #define CONST_IF_6_10 const
@@ -1609,3 +1617,4 @@ out:
     kfree(new_pol);
     return NULL;
 }
+#endif
